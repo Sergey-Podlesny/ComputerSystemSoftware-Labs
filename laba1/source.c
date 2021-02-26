@@ -59,19 +59,25 @@ void menu()
     men = (struct Men*)malloc(sizeof (struct Men));
     setData(men, 0.7, 0.3, 10);
     int numChoice;
-    double countOfMinute;
-    double countOfMoney;
+    int countOfMinute;
+    int countOfMoney;
     debug(men);
     do {
         puts("1. Local call");
         puts("2. Regional call");
         puts("3. Push money call");
         puts("4. Exit");
-        scanf("%i", &numChoice);
+        while (!scanf("%i", &numChoice) || (numChoice < 1 || numChoice > 4))
+        {
+            while(getchar()!='\n');
+        }
         switch (numChoice) {
             case 1:
                 printf("Count of minute: ");
-                scanf("%lf", &countOfMinute);
+                while (!scanf("%i", &countOfMinute) || countOfMinute < 0)
+                {
+                    while(getchar()!='\n');
+                }
                 if(localCall(men, countOfMinute))
                 {
                     puts("Successfully!");
@@ -84,7 +90,10 @@ void menu()
                 break;
             case 2:
                 printf("Count of minute: ");
-                scanf("%lf", &countOfMinute);
+                while (!scanf("%i", &countOfMinute) || countOfMinute < 0)
+                {
+                    while(getchar()!='\n');
+                }
                 if(regionalCall(men, countOfMinute))
                 {
                     puts("Successfully!");
@@ -97,7 +106,10 @@ void menu()
                 break;
             case 3:
                 printf("Count of money: ");
-                scanf("%lf", &countOfMoney);
+                while (!scanf("%i", &countOfMoney) || countOfMoney < 0)
+                {
+                    while(getchar()!='\n');
+                }
                 pushMoney(men, countOfMoney);
                 debug(men);
                 break;
