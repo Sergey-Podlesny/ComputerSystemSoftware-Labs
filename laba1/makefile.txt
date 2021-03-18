@@ -10,4 +10,4 @@ source.o: source.c
 	gcc $(CFLAGS) source.c
 
 clean:
-	rm -rf *.o hello
+	rm -rf *.o laba

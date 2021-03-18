@@ -14,6 +14,7 @@ int main() {
     time_t t;
     int status;
 
+
     childId = fork();
     if (childId == -1) {
         perror("fork() error");
