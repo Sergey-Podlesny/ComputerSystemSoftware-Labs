@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void goThroughFileTree(DIR *dir, char *path, char name[20], char user[20], char group[20], char type[20], char perm[20],
-                       FILE *file) {
+void scanFileTree(DIR *dir, char *path, char *name, char *user, char *group, char *type, char *perm,
+                  FILE *file) {
     struct dirent *entry;
     char *currentPath = (char *) malloc(200);
     while ((entry = readdir(dir)) != NULL) {
@@ -19,25 +19,25 @@ void goThroughFileTree(DIR *dir, char *path, char name[20], char user[20], char 
             }
             if ((name == NULL || !strcmp(entry->d_name, name)) && (type == NULL || entry->d_type == 4) &&
                 (type == NULL || !strcmp(type, "folder")))
-                printInfoToFile(user, group, path, entry, file);
-            currentPath = createNewCurrentPath(entry, path);
+                writeDataToFile(user, group, path, entry, file);
+            currentPath = getCurrentPath(entry, path);
             DIR *newDir = opendir(currentPath);
             if (!newDir) {
                 continue;
             }
-            goThroughFileTree(newDir, currentPath, name, user, group, type, perm, file);
+            scanFileTree(newDir, currentPath, name, user, group, type, perm, file);
             closedir(newDir);
         } else {
             if ((name == NULL || !strcmp(entry->d_name, name)) && (type == NULL || entry->d_type == 8) &&
                 (type == NULL || !strcmp(type, "file")) &&
-                (perm == NULL || checkPerm(createNewCurrentPath(entry, path), atoi(perm))))
-                printInfoToFile(user, group, path, entry, file);
+                (perm == NULL || checkPermission(getCurrentPath(entry, path), atoi(perm))))
+                writeDataToFile(user, group, path, entry, file);
         }
     }
     free(currentPath);
 }
 
-void printInfoToFile(char user[20], char group[20], char *path, struct dirent *entry, FILE *file) {
+void writeDataToFile(char *user, char *group, char *path, struct dirent *entry, FILE *file) {
     struct stat *info = (struct stat *) malloc(sizeof(struct stat));
     stat(path, info);
 
@@ -50,7 +50,7 @@ void printInfoToFile(char user[20], char group[20], char *path, struct dirent *e
     }
 }
 
-int checkPerm(char path[100], int perm) {
+int checkPermission(char *path, int perm) {
     int currentPerm = 0;
     int R = (access(path, R_OK) == 0) ? 1 : 0;
     int W = (access(path, W_OK) == 0) ? 1 : 0;
@@ -78,7 +78,7 @@ int checkPerm(char path[100], int perm) {
 }
 
 
-char *getParam(const char *paramName, char *argv[], int argc) {
+char *getOptions(const char *paramName, char **argv, int argc) {
     char *param = NULL;
     for (int i = 1; i < argc; i += 2) {
         if (!strcmp(argv[i], paramName)) {
@@ -90,7 +90,7 @@ char *getParam(const char *paramName, char *argv[], int argc) {
     return param;
 }
 
-void printInfoFromFile(FILE *file, int fd) {
+void readDataFromFile(FILE *file, int fd) {
     char stringFromFile[100];
     fseek(file, 0, 0);
     fgets(stringFromFile, 100, file);
@@ -100,7 +100,7 @@ void printInfoFromFile(FILE *file, int fd) {
     }
 }
 
-char *createNewCurrentPath(struct dirent *entry, char *path) {
+char *getCurrentPath(struct dirent *entry, char *path) {
     char *currentPath = (char *) malloc(200);
     int length = strlen(entry->d_name);
     strcpy(currentPath, path);
@@ -111,7 +111,7 @@ char *createNewCurrentPath(struct dirent *entry, char *path) {
 
 }
 
-void closeAll(int fd, DIR *dir, char *template) {
+void closeFiles(int fd, DIR *dir, char *template) {
     closedir(dir);
     close(fd);
     unlink(template);
