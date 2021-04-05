@@ -8,6 +8,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+char *getOptions(const char *paramName, char **argv, int argc) {
+    char *param = NULL;
+    for (int i = 1; i < argc; i += 2) {
+        if (!strcmp(argv[i], paramName)) {
+            char *param = (char *) malloc(20);
+            strcpy(param, argv[i + 1]);
+            return param;
+        }
+    }
+    return param;
+}
+
 void scanFileTree(DIR *dir, char *path, char *name, char *user, char *group, char *type, char *perm,
                   FILE *file) {
     struct dirent *entry;
@@ -18,7 +30,7 @@ void scanFileTree(DIR *dir, char *path, char *name, char *user, char *group, cha
                 continue;
             }
             if ((name == NULL || !strcmp(entry->d_name, name)) && (type == NULL || entry->d_type == 4) &&
-                (type == NULL || !strcmp(type, "folder")))
+                (type == NULL || !strcmp(type, "folder")) && perm == NULL)
                 writeDataToFile(user, group, path, entry, file);
             currentPath = getCurrentPath(entry, path);
             DIR *newDir = opendir(currentPath);
@@ -37,17 +49,16 @@ void scanFileTree(DIR *dir, char *path, char *name, char *user, char *group, cha
     free(currentPath);
 }
 
-void writeDataToFile(char *user, char *group, char *path, struct dirent *entry, FILE *file) {
-    struct stat *info = (struct stat *) malloc(sizeof(struct stat));
-    stat(path, info);
 
-    struct passwd *pw = getpwuid(info->st_uid);
-    struct group *gr = getgrgid(info->st_gid);
-    if ((user == NULL || !strcmp(pw->pw_name, user)) && (group == NULL || !strcmp(gr->gr_name, group))) {
-        fprintf(file, "%s/%s - Owner - %s    Group - %s  Type-%d\n", path, entry->d_name, pw->pw_name, gr->gr_name,
-                entry->d_type);
-        fflush(file);
-    }
+char *getCurrentPath(struct dirent *entry, char *path) {
+    char *currentPath = (char *) malloc(200);
+    int length = strlen(entry->d_name);
+    strcpy(currentPath, path);
+    size_t symbolLength = 1;
+    strncat(currentPath, "/", symbolLength);
+    strncat(currentPath, entry->d_name, length);
+    return currentPath;
+
 }
 
 int checkPermission(char *path, int perm) {
@@ -78,19 +89,7 @@ int checkPermission(char *path, int perm) {
 }
 
 
-char *getOptions(const char *paramName, char **argv, int argc) {
-    char *param = NULL;
-    for (int i = 1; i < argc; i += 2) {
-        if (!strcmp(argv[i], paramName)) {
-            char *param = (char *) malloc(20);
-            strcpy(param, argv[i + 1]);
-            return param;
-        }
-    }
-    return param;
-}
-
-void readDataFromFile(FILE *file, int fd) {
+void readDataFromFile(FILE *file) {
     char stringFromFile[100];
     fseek(file, 0, 0);
     fgets(stringFromFile, 100, file);
@@ -100,15 +99,17 @@ void readDataFromFile(FILE *file, int fd) {
     }
 }
 
-char *getCurrentPath(struct dirent *entry, char *path) {
-    char *currentPath = (char *) malloc(200);
-    int length = strlen(entry->d_name);
-    strcpy(currentPath, path);
-    size_t symbolLength = 1;
-    strncat(currentPath, "/", symbolLength);
-    strncat(currentPath, entry->d_name, length);
-    return currentPath;
+void writeDataToFile(char *user, char *group, char *path, struct dirent *entry, FILE *file) {
+    struct stat *info = (struct stat *) malloc(sizeof(struct stat));
+    stat(path, info);
 
+    struct passwd *pw = getpwuid(info->st_uid);
+    struct group *gr = getgrgid(info->st_gid);
+    if ((user == NULL || !strcmp(pw->pw_name, user)) && (group == NULL || !strcmp(gr->gr_name, group))) {
+        fprintf(file, "%s/%s - Owner - %s    Group - %s  Type-%d\n", path, entry->d_name, pw->pw_name, gr->gr_name,
+                entry->d_type);
+        fflush(file);
+    }
 }
 
 void closeFiles(int fd, DIR *dir, char *template) {

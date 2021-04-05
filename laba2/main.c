@@ -4,6 +4,7 @@
 #include <string.h>
 #include "header.h"
 
+
 int main(int argc, char *argv[]) {
     char *name = getOptions("name", argv, argc);
     char *user = getOptions("user", argv, argc);
@@ -16,15 +17,15 @@ int main(int argc, char *argv[]) {
     char template[50] = "laba2XXXXXX";
     int fd = mkstemp(template);
 
-    FILE *file = (FILE *) malloc(sizeof(FILE));
+    FILE *file;
     file = fopen(template, "r+");
     if (fd == -1 || file == NULL || !dir) {
         perror("file system error");
         closeFiles(fd, dir, template);
-        return 1;
+        return -1;
     }
     scanFileTree(dir, path, name, user, group, type, perm, file);
-    readDataFromFile(file, fd);
+    readDataFromFile(file);
     closeFiles(fd, dir, template);
     return 0;
 }
