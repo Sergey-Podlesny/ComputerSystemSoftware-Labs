@@ -1,0 +1,13 @@
+CFLAGS = -c -W -Wall -Wextra -xc -std=c11 -ggdb -g3
+
+laba3: main.o source.o
+	gcc main.o source.o -o laba3
+
+main.o: main.c
+	gcc $(CFLAGS) main.c
+
+source.o: source.c
+	gcc $(CFLAGS) source.c
+
+clean:
+	rm -rf *.o laba3
